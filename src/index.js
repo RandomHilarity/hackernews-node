@@ -1,29 +1,5 @@
 const { graphQLServer, GraphQLServer } = require('graphql-yoga');
 
-const typeDefs = `
-  type Query {
-    info: String!
-    feed: [Link!]!
-  }
-  type Link {
-    id: ID!
-    description: String!
-    url: String!
-  }
-`
-
-const resolvers = {
-  Query: {
-    info: () => `Hackernews Clone`,
-    feed: () => links,
-  },
-  Link: {
-      id: (parent) => parent.id,
-      description: (parent) => parent.description,
-      url: (parent) => parent.url
-  }
-};
-
 // dummy data for testing
 let links = [{
     id: 'link-0',
@@ -31,8 +7,51 @@ let links = [{
     description: 'Fullstack tutorial for GraphQL'
 }];
 
+let idCount = links.length;
+
+const resolvers = {
+  Query: {
+    info: () => `Hackernews Clone`,
+    feed: () => links,
+    link: (parent, args) => links.find(link => link.id === args.id)
+  },
+  Mutation: {
+    post: (parent, args) => {
+      const link = {
+        id: `link-${idCount++}`,
+        description: args.description,
+        url: args.url
+      }
+      links.push(link);
+      return link;
+    },
+    updateLink: (parent, args) => {
+      let link = links.find(link => link.id === args.id)
+      if(!link) { throw new Error('no link with id: ' + args.id)}
+
+      links.find((x, i) => {
+          if (x.id === args.id) {
+              links[i] = {...links[i], ...args}
+              link = links[i]
+          }
+      });
+
+      return link;       
+    },
+    deleteLink: (parent, args) => {    
+      let link = links.find(link => link.id === args.id)
+      if(!link) { throw new Error('no link with id: ' + args.id)}
+
+      links.find((x, i) => {
+        if (x.id === args.id) { links.splice(i, 1) }
+      })
+      return link;
+    }
+  }
+}
+
 const server = new GraphQLServer({
-  typeDefs,
+  typeDefs: './src/schema.graphql',
   resolvers
 });
 
