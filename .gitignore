@@ -1,0 +1,6 @@
+#dependencies
+/node_modules
+
+#prisma database and test migrations
+/prisma/migrations
+/prisma/dev.db
